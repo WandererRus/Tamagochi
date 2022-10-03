@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
+using System.Timers;
 using System.Windows.Forms;
 
 
@@ -6,38 +8,66 @@ namespace Tamagochi
 {
     internal class Program
     {
-        static System.Timers.Timer timer = new System.Timers.Timer();
         static Random rnd = new Random();
-        static Dog dog = new Dog(0);
+        static Dog dog = new Dog();
+        static System.Timers.Timer timer = new System.Timers.Timer(3000);
+        static DateTime dt;
         static void Main(string[] args)
-        {           
-           
-            timer.Interval = 3000;
+        {            
+            
             timer.Elapsed += Timer_Elapsed;
+            timer.Enabled = true;
+            dt = DateTime.Now;
+            dt = dt.AddMinutes(3);
+            Console.ReadLine();
         }
         static private void Timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
-            timer.Interval = rnd.Next(1000, 10000);
-            int action = rnd.Next(1, 6);
-            dog.Wanna("Хочу играть");
+            if (!dog.LivesDog() && DateTime.Now < dt)
+            {
+                if (DateTime.Now > dt)
+                {
+                    timer.Stop();
+                    Console.WriteLine("Собака выжила в ваших руках.");
+                }
+                Console.WriteLine(e.SignalTime);
+                timer.Interval = rnd.Next(1000, 10000);
+                int action = rnd.Next(1, 6);
+                switch (action)
+                {
+                    case 1: dog.Wanna("Хочу играть"); break;
+                    case 2: dog.Wanna("Хочу есть"); break;
+                    case 3: dog.Wanna("Хочу спать"); break;
+                    case 4: dog.Wanna("Хочу гулять"); break;
+                    case 5: dog.Wanna("Хочу в туалет"); break;
+                    default: MessageBox.Show("Песика похитили"); break;
+                }
+            }
+            else
+            {
+                timer.Stop();
+            }
+            
         }
 
     }
-}
+
     class Dog 
     {
-        int _state;
         int _live = 3;
         bool _death = false;
 
-        public Dog(int state) 
+        public Dog() 
         {
-            _state = state;
+            
         }
-
+        public bool LivesDog()
+        {
+            return _death;
+        }
         public void Wanna(string wish)
         {
-            DialogResult dr = new DialogResult();
+            DialogResult dr;
             dr = MessageBox.Show("ГАВ! " + wish, wish, MessageBoxButtons.OKCancel);
             if (DialogResult.OK == dr)
             {
@@ -45,15 +75,20 @@ namespace Tamagochi
                 {
                     _live++;
                 }
+                Console.Clear();
+                Calm();
+                Console.WriteLine($"Песик имеет {_live} жизней");
             }
             if (DialogResult.Cancel == dr)
             {
                 Console.Clear();
                 Sad();
                 _live--;
+                Console.WriteLine($"Песик имеет {_live} жизней");
             }
             if (_live == 0)
             {
+                _death = true;
                 Console.WriteLine("Песик умер");
             }
         }
